@@ -227,10 +227,6 @@
             const views = document.querySelectorAll('.view');
             const messageBox = document.getElementById('message-box');
             const messageText = document.getElementById('message-text');
-            
-            // NOTE: The API key is provided here as a placeholder.
-            // Replace 'YOUR_API_KEY' with your actual API key.
-            const API_KEY = ""; // Do not remove this variable. It's a placeholder.
 
             const showMessage = (text) => {
                 messageText.textContent = text;
@@ -266,7 +262,17 @@
                 });
             });
 
-            // Chat Assistant
+            // --- API Keys ---
+            // WARNING: Exposing API keys in client-side code is a major security risk.
+            // These should ideally be handled on a secure backend server.
+            const API_KEYS = {
+                chat: "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",
+                image: "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",
+                file: "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",
+                code: "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"
+            };
+
+            // --- Chat Assistant ---
             const chatInput = document.getElementById('chat-input');
             const chatSendBtn = document.getElementById('chat-send');
             const chatContainer = chatView.querySelector('div:first-child');
@@ -285,10 +291,11 @@
             const renderChatHistory = (history) => {
                 chatContainer.innerHTML = '';
                 history.forEach(msg => {
-                    if (msg.role === 'user' || msg.role === 'model') {
+                    // Adjust for OpenRouter message format
+                    if (msg.role === 'user' || msg.role === 'assistant') {
                         const messageDiv = document.createElement('div');
                         messageDiv.classList.add('chat-message', msg.role === 'user' ? 'user-message' : 'ai-message');
-                        messageDiv.textContent = msg.parts[0].text;
+                        messageDiv.textContent = msg.content; // Use 'content' for OpenRouter
                         chatContainer.appendChild(messageDiv);
                     }
                 });
@@ -318,10 +325,6 @@
             loadChatFromLocalStorage();
 
             const sendMessage = async () => {
-                if (API_KEY === "") {
-                    showMessage("API Key is missing. Please add a valid API key to the code.");
-                    return;
-                }
                 const prompt = chatInput.value.trim();
                 if (!prompt) return;
 
@@ -329,7 +332,8 @@
                 userMessageDiv.classList.add('chat-message', 'user-message');
                 userMessageDiv.textContent = prompt;
                 chatContainer.appendChild(userMessageDiv);
-                chatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+                // Adjust for OpenRouter message format
+                chatHistory.push({ role: 'user', content: prompt });
                 chatInput.value = '';
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -340,31 +344,53 @@
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
                 try {
-                    const payload = { contents: chatHistory };
-                    const apiKey = API_KEY;
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
-                    
+                    // Use OpenRouter chat completions endpoint
+                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
+                    const payload = {
+                        model: "openai/gpt-4o-mini", // Specify the model
+                        messages: chatHistory // Use 'messages' array
+                    };
+
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Authorization': `Bearer ${API_KEYS.chat}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'Baba Baniyecche Somman Kor',
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
-                    
-                    const result = await response.json();
-                    const aiMessage = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-                    if (aiMessage) {
+                    const result = await response.json();
+
+                    // Check for API errors in the response body
+                    if (result.error) {
+                        console.error("Chat API returned an error:", result.error);
+                        responseDiv.textContent = `API Error: ${result.error.message || 'Unknown error'}`;
+                        return; // Stop processing if API reports an error
+                    }
+
+                    // Extract message content based on OpenRouter/OpenAI format
+                    const aiMessage = result?.choices?.[0]?.message?.content;
+
+                    if (aiMessage !== undefined && aiMessage !== null) {
                         responseDiv.textContent = aiMessage;
-                        chatHistory.push({ role: 'model', parts: [{ text: aiMessage }] });
+                        // Update history with assistant's message (OpenRouter format)
+                        chatHistory.push({ role: 'assistant', content: aiMessage });
                     } else {
-                        responseDiv.textContent = "Sorry, something went wrong. Please try again.";
+                        // Handle case where message content is missing but no explicit API error
+                        console.warn("Unexpected API response structure for chat:", result);
+                        responseDiv.textContent = "Sorry, something went wrong. The response format was unexpected.";
                     }
                 } catch (error) {
-                    console.error("Chat API error:", error);
-                    responseDiv.textContent = "Sorry, something went wrong. Please try again.";
+                    // Log the actual error object to the console
+                    console.error("Chat API error (network or parsing):", error);
+                    responseDiv.textContent = "Sorry, something went wrong. Please check the console for details.";
+                } finally {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    saveChatToLocalStorage(); // Save after every message
                 }
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                saveChatToLocalStorage(); // Save after every message
             };
 
             chatSendBtn.addEventListener('click', sendMessage);
@@ -385,17 +411,13 @@
                 loadChatFromLocalStorage();
             });
 
-            // Image Generator
+            // --- Image Generator ---
             const imagePromptInput = document.getElementById('image-prompt');
             const imageGenerateBtn = document.getElementById('image-generate');
             const generatedImage = document.getElementById('generated-image');
             const imageLoader = document.getElementById('image-loader');
 
             imageGenerateBtn.addEventListener('click', async () => {
-                if (API_KEY === "") {
-                    showMessage("API Key is missing. Please add a valid API key to the code.");
-                    return;
-                }
                 const prompt = imagePromptInput.value.trim();
                 if (!prompt) {
                     showMessage("Please enter a prompt to generate an image.");
@@ -407,36 +429,57 @@
                 imageGenerateBtn.disabled = true;
 
                 try {
-                    const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
-                    const apiKey = API_KEY;
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                    // Using OpenAI DALL-E 3 via OpenRouter
+                    const payload = {
+                        model: "openai/dall-e-3",
+                        prompt: prompt,
+                        n: 1,
+                        size: "1024x1024"
+                    };
+                    const apiUrl = `https://openrouter.ai/api/v1/images/generations`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Authorization': `Bearer ${API_KEYS.image}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'Baba Baniyecche Somman Kor',
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
 
                     const result = await response.json();
-                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-                        const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+
+                    // Check for API errors in the response body
+                    if (result.error) {
+                        console.error("Image API returned an error:", result.error);
+                        generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
+                        showMessage(`API Error: ${result.error.message || 'Unknown error'}`);
+                        return;
+                    }
+
+                    if (result.data && result.data.length > 0 && result.data[0].url) {
+                        const imageUrl = result.data[0].url;
                         generatedImage.src = imageUrl;
                         generatedImage.alt = prompt;
                     } else {
+                        console.warn("Unexpected API response structure for image generation:", result);
                         generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
-                        showMessage("Image generation failed. Please try again.");
+                        showMessage("Image generation failed. Unexpected response format.");
                     }
                 } catch (error) {
-                    console.error("Image API error:", error);
+                    // Log the actual error object to the console
+                    console.error("Image API error (network or parsing):", error);
                     generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
-                    showMessage("Image generation failed. Please try again.");
+                    showMessage("Image generation failed. Please check the console for details.");
                 } finally {
                     imageLoader.classList.add('hidden');
                     imageGenerateBtn.disabled = false;
                 }
             });
 
-            // File Analyzer
+            // --- File Analyzer ---
             const fileInput = document.getElementById('file-input');
             const fileAnalyzeBtn = document.getElementById('file-analyze');
             const fileResultContainer = fileView.querySelector('div:first-child');
@@ -446,20 +489,15 @@
             const fileChatSendBtn = document.getElementById('file-chat-send');
 
             let fileChatHistory = [];
-            let fileDataPart = null;
 
             const sendFilePrompt = async (prompt) => {
-                if (API_KEY === "") {
-                    showMessage("API Key is missing. Please add a valid API key to the code.");
-                    return;
-                }
                 if (!prompt) return;
 
                 const userMessageDiv = document.createElement('div');
                 userMessageDiv.classList.add('chat-message', 'user-message');
                 userMessageDiv.textContent = prompt;
                 fileResultContainer.appendChild(userMessageDiv);
-                fileChatHistory.push({ role: 'user', parts: [{ text: prompt }] });
+                fileChatHistory.push({ role: "user", content: prompt });
                 fileChatPromptInput.value = '';
                 fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
 
@@ -470,37 +508,50 @@
                 fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
 
                 try {
-                    const payload = { contents: fileChatHistory };
-                    const apiKey = API_KEY;
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
+                    const payload = {
+                        model: "openai/gpt-4o-mini", // Specify the model
+                        messages: fileChatHistory
+                    };
+                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Authorization': `Bearer ${API_KEYS.file}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'Baba Baniyecche Somman Kor',
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
-                    
-                    const result = await response.json();
-                    const analysisResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-                    if (analysisResult) {
+                    const result = await response.json();
+
+                    // Check for API errors in the response body
+                    if (result.error) {
+                        console.error("File Analysis API returned an error:", result.error);
+                        responseDiv.textContent = `API Error: ${result.error.message || 'Unknown error'}`;
+                        return;
+                    }
+
+                    const analysisResult = result?.choices?.[0]?.message?.content;
+
+                    if (analysisResult !== undefined && analysisResult !== null) {
                         responseDiv.textContent = analysisResult;
-                        fileChatHistory.push({ role: 'model', parts: [{ text: analysisResult }] });
+                        fileChatHistory.push({ role: 'assistant', content: analysisResult });
                     } else {
-                        responseDiv.textContent = "Sorry, something went wrong with the analysis.";
+                        console.warn("Unexpected API response structure for file analysis (follow-up):", result);
+                        responseDiv.textContent = "Sorry, something went wrong with the analysis. Unexpected response format.";
                     }
                 } catch (error) {
-                    console.error("File Analysis API error:", error);
-                    responseDiv.textContent = "Sorry, something went wrong with the analysis.";
+                    // Log the actual error object to the console
+                    console.error("File Analysis API error (network or parsing - follow-up):", error);
+                    responseDiv.textContent = "Sorry, something went wrong with the analysis. Please check the console for details.";
                 }
                 fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
             };
 
             fileAnalyzeBtn.addEventListener('click', async () => {
-                if (API_KEY === "") {
-                    showMessage("API Key is missing. Please add a valid API key to the code.");
-                    return;
-                }
                 const file = fileInput.files[0];
                 if (!file) {
                     showMessage("Please select a file to analyze.");
@@ -510,11 +561,9 @@
                 fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base">Analyzing file...</div>`;
                 fileAnalyzeBtn.disabled = true;
                 fileChatHistory = [];
-                fileDataPart = null;
 
                 try {
-                    let parts = [];
-                    let promptText = "Analyze this file. Provide a summary of its content, file type, and potential use cases. The content is:";
+                    let promptText = "Analyze this file. Provide a summary of its content, file type, and potential use cases.";
 
                     if (file.type.startsWith('image/')) {
                         const base64Data = await new Promise((resolve) => {
@@ -522,49 +571,66 @@
                             reader.onload = () => resolve(reader.result.split(',')[1]);
                             reader.readAsDataURL(file);
                         });
-                        fileDataPart = {
-                            inlineData: {
-                                mimeType: file.type,
-                                data: base64Data
-                            }
-                        };
-                        parts.push({ text: promptText });
-                        parts.push(fileDataPart);
+                        fileChatHistory.push({
+                            role: "user",
+                            content: [
+                                { type: "text", text: promptText },
+                                { type: "image_url", image_url: { url: `data:${file.type};base64,${base64Data}` } }
+                            ]
+                        });
                     } else {
                         const fileContent = await new Promise((resolve) => {
                             const reader = new FileReader();
                             reader.onload = () => resolve(reader.result);
                             reader.readAsText(file);
                         });
-                        parts.push({ text: `${promptText} ${fileContent}` });
+                        fileChatHistory.push({
+                            role: "user",
+                            content: `${promptText} File content:\n${fileContent}`
+                        });
                     }
-                    
-                    fileChatHistory.push({ role: "user", parts: parts });
 
-                    const payload = { contents: fileChatHistory };
-                    const apiKey = API_KEY;
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
+                    const payload = {
+                         model: "openai/gpt-4o-mini", // Specify the model
+                         messages: fileChatHistory
+                    };
+                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Authorization': `Bearer ${API_KEYS.file}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'Baba Baniyecche Somman Kor',
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
-                    
-                    const result = await response.json();
-                    const analysisResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-                    if (analysisResult) {
+                    const result = await response.json();
+
+                    // Check for API errors in the response body
+                    if (result.error) {
+                        console.error("File Analysis API (initial) returned an error:", result.error);
+                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">API Error: ${result.error.message || 'Unknown error'}</div>`;
+                        return;
+                    }
+
+                    const analysisResult = result?.choices?.[0]?.message?.content;
+
+                    if (analysisResult !== undefined && analysisResult !== null) {
                         fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base"><pre class="whitespace-pre-wrap">${analysisResult}</pre></div>`;
-                        fileChatHistory.push({ role: 'model', parts: [{ text: analysisResult }] });
+                        fileChatHistory.push({ role: 'assistant', content: analysisResult });
                         fileUploadInputDiv.classList.add('hidden');
                         fileChatInputDiv.classList.remove('hidden');
                     } else {
-                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis.</div>`;
+                        console.warn("Unexpected API response structure for file analysis (initial):", result);
+                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis. Unexpected response format.</div>`;
                     }
                 } catch (error) {
-                    console.error("File Analysis API error:", error);
-                    fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis.</div>`;
+                    // Log the actual error object to the console
+                    console.error("File Analysis API error (network or parsing - initial):", error);
+                    fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis. Please check the console for details.</div>`;
                 } finally {
                     fileAnalyzeBtn.disabled = false;
                 }
@@ -578,16 +644,12 @@
             });
 
 
-            // Code Helper
+            // --- Code Helper ---
             const codePromptTextarea = document.getElementById('code-prompt');
             const codeGenerateBtn = document.getElementById('code-generate');
             const codeOutputDiv = document.getElementById('code-output');
 
             codeGenerateBtn.addEventListener('click', async () => {
-                if (API_KEY === "") {
-                    showMessage("API Key is missing. Please add a valid API key to the code.");
-                    return;
-                }
                 const prompt = codePromptTextarea.value.trim();
                 if (!prompt) {
                     showMessage("Please enter a prompt for the code helper.");
@@ -599,31 +661,46 @@
 
                 try {
                     const payload = {
-                        contents: [{
+                        model: "openai/gpt-4o-mini", // Specify the model
+                        messages: [{
                             role: "user",
-                            parts: [{ text: `Generate code based on the following request. Provide the code in a single code block. If you are fixing or debugging code, provide the corrected code in a code block and an explanation below the block. Request: ${prompt}` }]
+                            content: `Generate code based on the following request. Provide the code in a single code block. If you are fixing or debugging code, provide the corrected code in a code block and an explanation below the block. Request: ${prompt}`
                         }]
                     };
-                    const apiKey = API_KEY;
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Authorization': `Bearer ${API_KEYS.code}`,
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'Baba Baniyecche Somman Kor',
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify(payload)
                     });
-                    
-                    const result = await response.json();
-                    const codeResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-                    if (codeResult) {
+                    const result = await response.json();
+
+                     // Check for API errors in the response body
+                    if (result.error) {
+                        console.error("Code Helper API returned an error:", result.error);
+                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">API Error: ${result.error.message || 'Unknown error'}</div>`;
+                        return;
+                    }
+
+                    const codeResult = result?.choices?.[0]?.message?.content;
+
+                    if (codeResult !== undefined && codeResult !== null) {
                         codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base"><pre class="whitespace-pre-wrap">${codeResult}</pre></div>`;
                     } else {
-                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation.</div>`;
+                        console.warn("Unexpected API response structure for code helper:", result);
+                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation. Unexpected response format.</div>`;
                     }
                 } catch (error) {
-                    console.error("Code Helper API error:", error);
-                    codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation.</div>`;
+                    // Log the actual error object to the console
+                    console.error("Code Helper API error (network or parsing):", error);
+                    codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation. Please check the console for details.</div>`;
                 } finally {
                     codeGenerateBtn.disabled = false;
                 }
