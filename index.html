@@ -227,6 +227,10 @@
             const views = document.querySelectorAll('.view');
             const messageBox = document.getElementById('message-box');
             const messageText = document.getElementById('message-text');
+            
+            // NOTE: The API key is provided here as a placeholder.
+            // Replace 'YOUR_API_KEY' with your actual API key.
+            const API_KEY = ""; // Do not remove this variable. It's a placeholder.
 
             const showMessage = (text) => {
                 messageText.textContent = text;
@@ -314,6 +318,10 @@
             loadChatFromLocalStorage();
 
             const sendMessage = async () => {
+                if (API_KEY === "") {
+                    showMessage("API Key is missing. Please add a valid API key to the code.");
+                    return;
+                }
                 const prompt = chatInput.value.trim();
                 if (!prompt) return;
 
@@ -333,8 +341,8 @@
 
                 try {
                     const payload = { contents: chatHistory };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiKey = API_KEY;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -384,6 +392,10 @@
             const imageLoader = document.getElementById('image-loader');
 
             imageGenerateBtn.addEventListener('click', async () => {
+                if (API_KEY === "") {
+                    showMessage("API Key is missing. Please add a valid API key to the code.");
+                    return;
+                }
                 const prompt = imagePromptInput.value.trim();
                 if (!prompt) {
                     showMessage("Please enter a prompt to generate an image.");
@@ -396,7 +408,7 @@
 
                 try {
                     const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
-                    const apiKey = "";
+                    const apiKey = API_KEY;
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
@@ -437,6 +449,10 @@
             let fileDataPart = null;
 
             const sendFilePrompt = async (prompt) => {
+                if (API_KEY === "") {
+                    showMessage("API Key is missing. Please add a valid API key to the code.");
+                    return;
+                }
                 if (!prompt) return;
 
                 const userMessageDiv = document.createElement('div');
@@ -455,8 +471,8 @@
 
                 try {
                     const payload = { contents: fileChatHistory };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiKey = API_KEY;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -481,6 +497,10 @@
             };
 
             fileAnalyzeBtn.addEventListener('click', async () => {
+                if (API_KEY === "") {
+                    showMessage("API Key is missing. Please add a valid API key to the code.");
+                    return;
+                }
                 const file = fileInput.files[0];
                 if (!file) {
                     showMessage("Please select a file to analyze.");
@@ -522,8 +542,8 @@
                     fileChatHistory.push({ role: "user", parts: parts });
 
                     const payload = { contents: fileChatHistory };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiKey = API_KEY;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -564,6 +584,10 @@
             const codeOutputDiv = document.getElementById('code-output');
 
             codeGenerateBtn.addEventListener('click', async () => {
+                if (API_KEY === "") {
+                    showMessage("API Key is missing. Please add a valid API key to the code.");
+                    return;
+                }
                 const prompt = codePromptTextarea.value.trim();
                 if (!prompt) {
                     showMessage("Please enter a prompt for the code helper.");
@@ -580,8 +604,8 @@
                             parts: [{ text: `Generate code based on the following request. Provide the code in a single code block. If you are fixing or debugging code, provide the corrected code in a code block and an explanation below the block. Request: ${prompt}` }]
                         }]
                     };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiKey = API_KEY;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
