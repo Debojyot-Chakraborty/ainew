@@ -1,711 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BABA BANIYECHE SOMMAN KOR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .bg-gradient-custom {
-            background-image: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-        }
-        .nav-btn.active {
-            background-color: #3b82f6;
-            color: #ffffff;
-        }
-        .nav-btn.inactive {
-            background-color: #f1f5f9;
-            color: #4b5563;
-        }
-        .btn-primary {
-            background-color: #3b82f6;
-            color: #ffffff;
-            transition: all 0.2s ease-in-out;
-        }
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .chat-message {
-            max-width: 80%;
-            padding: 0.75rem 1rem;
-            border-radius: 1.5rem;
-            margin-bottom: 1rem;
-            word-wrap: break-word;
-        }
-        .user-message {
-            background-color: #3b82f6;
-            color: #ffffff;
-            align-self: flex-end;
-            border-bottom-right-radius: 0.5rem;
-        }
-        .ai-message {
-            background-color: #e2e8f0;
-            color: #1f2937;
-            align-self: flex-start;
-            border-bottom-left-radius: 0.5rem;
-        }
-        .loader {
-            border: 4px solid #e5e7eb;
-            border-radius: 50%;
-            border-top: 4px solid #3b82f6;
-            width: 24px;
-            height: 24px;
-            -webkit-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-        }
-        @-webkit-keyframes spin {
-            0% { -webkit-transform: rotate(0deg); }
-            100% { -webkit-transform: rotate(360deg); }
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #loading-page {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-in-out;
-        }
-        #loading-page.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BABA BANIYECHE SOMMAN KOR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-gradient-custom { background-image: linear-gradient(135deg,#e2e8f0 0%,#cbd5e1 100%);}
+    .nav-btn.active { background:#3b82f6;color:#fff;}
+    .nav-btn.inactive { background:#f1f5f9;color:#4b5563;}
+    .btn-primary { background:#3b82f6;color:#fff;transition:.2s;}
+    .btn-primary:hover { transform:translateY(-1px);box-shadow:0 4px 8px rgba(59,130,246,.3);}
+    .chat-message { max-width:80%;padding:.75rem 1rem;border-radius:1.5rem;margin-bottom:1rem;}
+    .user-message { background:#3b82f6;color:#fff;align-self:flex-end;border-bottom-right-radius:.5rem;}
+    .ai-message { background:#f3f4f6;color:#111827;align-self:flex-start;border-bottom-left-radius:.5rem;}
+    pre,code { background:#e2e8f0;border-radius:6px;padding:4px 6px;display:inline-block;overflow-x:auto;}
+    table{border-collapse:collapse;width:100%;margin-top:10px;}
+    th,td{border:1px solid #9ca3af;padding:6px 10px;text-align:left;}
+    .loader{border:4px solid #e5e7eb;border-top:4px solid #3b82f6;border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 bg-gradient-custom">
-
-    <!-- Loading Page -->
-    <div id="loading-page">
-        <div class="loader mb-4"></div>
-        <p class="text-xl font-bold text-gray-700">Loading...</p>
+  <div id="main-app" class="bg-white rounded-3xl shadow-xl w-full max-w-4xl p-4 flex flex-col md:flex-row gap-6 overflow-hidden">
+    <div class="md:w-1/4 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-6">
+      <h1 class="text-2xl font-bold text-gray-800 text-center md:text-left">BABA BANIYECHE SOMMAN KOR</h1>
+      <nav class="flex md:flex-col gap-2 overflow-x-auto">
+        <button class="nav-btn active font-medium py-3 px-4 rounded-full text-sm" data-view="chat">Chat</button>
+        <button class="nav-btn inactive font-medium py-3 px-4 rounded-full text-sm" data-view="image">Image</button>
+        <button class="nav-btn inactive font-medium py-3 px-4 rounded-full text-sm" data-view="file">File</button>
+        <button class="nav-btn inactive font-medium py-3 px-4 rounded-full text-sm" data-view="code">Code</button>
+      </nav>
     </div>
 
-    <!-- Main App Container -->
-    <div id="main-app" class="bg-white rounded-3xl shadow-xl w-full max-w-4xl p-2 sm:p-4 md:p-8 flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8 overflow-hidden hidden">
-        
-        <!-- Sidebar Navigation -->
-        <div class="md:w-1/4 flex flex-col gap-2 md:gap-4 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-6">
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800 text-center md:text-left">BABA BANIYECHE SOMMAN KOR</h1>
-            <nav class="flex md:flex-col gap-2 overflow-x-auto scrollbar-hide">
-                <button class="nav-btn active font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm transition-colors" data-view="chat">Chat Assistant</button>
-                <button class="nav-btn inactive font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm transition-colors" data-view="image">Image Generator</button>
-                <button class="nav-btn inactive font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm transition-colors" data-view="file">File Analyzer</button>
-                <button class="nav-btn inactive font-medium py-2 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm transition-colors" data-view="code">Code Helper</button>
-            </nav>
+    <div class="md:w-3/4">
+      <!-- CHAT -->
+      <div id="chat-view" class="view flex flex-col h-full">
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-2xl mb-4">
+          <div class="chat-message ai-message">👋 Hello! I'm your chat assistant.</div>
         </div>
-
-        <!-- Main Content Area -->
-        <div class="md:w-3/4">
-
-            <!-- Chat Assistant View -->
-            <div id="chat-view" class="view flex flex-col h-full hidden">
-                <div class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 bg-gray-50 rounded-2xl mb-4 scrollbar-hide">
-                    <!-- Chat messages will be appended here -->
-                    <div class="chat-message ai-message text-sm sm:text-base">Hello! I'm your chat assistant. Ask me anything.</div>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex flex-col sm:flex-row items-center gap-2">
-                        <button id="chat-new" class="btn-primary w-full sm:w-1/3 p-2 rounded-full font-bold text-sm">New Chat</button>
-                        <button id="chat-load" class="btn-primary w-full sm:w-1/3 p-2 rounded-full font-bold text-sm">Load Last Chat</button>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="chat-input" class="flex-1 p-3 sm:p-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" placeholder="Type your message...">
-                        <button id="chat-send" class="btn-primary p-3 sm:p-4 rounded-full shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Image Generator View -->
-            <div id="image-view" class="view flex flex-col h-full hidden">
-                <div class="relative w-full h-64 sm:h-80 bg-gray-200 rounded-2xl flex items-center justify-center overflow-hidden mb-4">
-                    <div id="image-loader" class="loader hidden"></div>
-                    <img id="generated-image" src="https://placehold.co/600x400/e5e7eb/6b7280?text=Your+image+will+appear+here" alt="Generated Image" class="w-full h-full object-cover rounded-2xl">
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="text" id="image-prompt" class="flex-1 p-3 sm:p-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" placeholder="Describe the image you want to generate...">
-                    <button id="image-generate" class="btn-primary p-3 sm:p-4 rounded-full shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- File Analyzer View -->
-            <div id="file-view" class="view flex flex-col h-full hidden">
-                <div class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 bg-gray-50 rounded-2xl mb-4 scrollbar-hide">
-                    <!-- File analysis results and chat messages will be appended here -->
-                    <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base">
-                        <p>Upload a file to get started with the analysis.</p>
-                    </div>
-                </div>
-                <div id="file-upload-input" class="flex items-center gap-2">
-                    <input type="file" id="file-input" class="flex-1 block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                    <button id="file-analyze" class="btn-primary p-3 sm:p-4 rounded-full shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </button>
-                </div>
-                 <div id="file-chat-input" class="flex items-center gap-2 hidden">
-                    <input type="text" id="file-chat-prompt" class="flex-1 p-3 sm:p-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" placeholder="Ask a follow-up question...">
-                    <button id="file-chat-send" class="btn-primary p-3 sm:p-4 rounded-full shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Code Helper View -->
-            <div id="code-view" class="view flex flex-col h-full hidden">
-                <div class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 bg-gray-50 rounded-2xl mb-4 scrollbar-hide">
-                    <!-- Code output will be displayed here -->
-                    <div id="code-output" class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base">
-                        <p>Type a prompt to generate, debug, or fix code.</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <textarea id="code-prompt" class="flex-1 p-3 sm:p-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" rows="3" placeholder="Describe the code you need or the issue you're facing..."></textarea>
-                    <button id="code-generate" class="btn-primary p-3 sm:p-4 rounded-full shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.674M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <button id="chat-new" class="btn-primary w-1/2 p-2 rounded-full font-bold text-sm">New Chat</button>
+            <button id="chat-load" class="btn-primary w-1/2 p-2 rounded-full font-bold text-sm">Load Chat</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="chat-input" class="flex-1 p-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Type your message...">
+            <button id="chat-send" class="btn-primary p-3 rounded-full shadow-lg">Send</button>
+          </div>
         </div>
+      </div>
+
+      <!-- IMAGE -->
+      <div id="image-view" class="view hidden flex flex-col h-full">
+        <div class="relative w-full h-72 bg-gray-200 rounded-2xl flex items-center justify-center mb-4">
+          <div id="image-loader" class="loader hidden"></div>
+          <img id="generated-image" src="https://placehold.co/600x400/e5e7eb/6b7280?text=Your+image+will+appear+here" class="w-full h-full object-cover rounded-2xl">
+        </div>
+        <div class="flex items-center gap-2">
+          <input id="image-prompt" class="flex-1 p-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Describe your image...">
+          <button id="image-generate" class="btn-primary p-3 rounded-full shadow-lg">Generate</button>
+        </div>
+      </div>
+
+      <!-- FILE -->
+      <div id="file-view" class="view hidden flex flex-col h-full">
+        <div id="file-result" class="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-2xl mb-4">
+          <div class="bg-white p-4 rounded-xl shadow-sm text-gray-700">Upload a file to analyze.</div>
+        </div>
+        <div id="file-upload-input" class="flex items-center gap-2">
+          <input type="file" id="file-input" class="flex-1 text-sm text-gray-500 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+          <button id="file-analyze" class="btn-primary p-3 rounded-full shadow-lg">Analyze</button>
+        </div>
+        <div id="file-chat" class="hidden mt-2 flex items-center gap-2">
+          <input id="file-chat-prompt" class="flex-1 p-3 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500" placeholder="Ask about the file...">
+          <button id="file-chat-send" class="btn-primary p-3 rounded-full shadow-lg">Send</button>
+        </div>
+      </div>
+
+      <!-- CODE -->
+      <div id="code-view" class="view hidden flex flex-col h-full">
+        <div id="code-output" class="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-2xl mb-4 text-gray-800">
+          <p>Type a prompt to generate, debug, or fix code.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <textarea id="code-prompt" class="flex-1 p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Describe your code problem..."></textarea>
+          <button id="code-generate" class="btn-primary p-3 rounded-full shadow-lg">Generate</button>
+        </div>
+      </div>
     </div>
-
-    <!-- Message Box for Alerts -->
-    <div id="message-box" class="fixed inset-x-0 bottom-4 mx-auto w-fit max-w-md bg-gray-900 text-white text-center py-3 px-6 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none">
-        <span id="message-text"></span>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const loadingPage = document.getElementById('loading-page');
-            const mainApp = document.getElementById('main-app');
-
-            // Hide loading page and show main app as soon as the DOM is ready
-            loadingPage.classList.add('hidden');
-            mainApp.classList.remove('hidden');
-
-            const chatView = document.getElementById('chat-view');
-            const imageView = document.getElementById('image-view');
-            const fileView = document.getElementById('file-view');
-            const codeView = document.getElementById('code-view');
-            const navButtons = document.querySelectorAll('.nav-btn');
-            const views = document.querySelectorAll('.view');
-            const messageBox = document.getElementById('message-box');
-            const messageText = document.getElementById('message-text');
-
-            const showMessage = (text) => {
-                messageText.textContent = text;
-                messageBox.classList.remove('opacity-0', 'pointer-events-none');
-                messageBox.classList.add('opacity-100');
-                setTimeout(() => {
-                    messageBox.classList.remove('opacity-100');
-                    messageBox.classList.add('opacity-0', 'pointer-events-none');
-                }, 3000);
-            };
-
-            const showView = (viewId) => {
-                views.forEach(view => view.classList.add('hidden'));
-                document.getElementById(viewId).classList.remove('hidden');
-                navButtons.forEach(btn => {
-                    if (btn.dataset.view === viewId.replace('-view', '')) {
-                        btn.classList.add('active');
-                        btn.classList.remove('inactive');
-                    } else {
-                        btn.classList.add('inactive');
-                        btn.classList.remove('active');
-                    }
-                });
-            };
-
-            // Initial view
-            showView('chat-view');
-
-            // Navigation event listeners
-            navButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showView(`${btn.dataset.view}-view`);
-                });
-            });
-
-            // --- API Keys ---
-            // WARNING: Exposing API keys in client-side code is a major security risk.
-            // These should ideally be handled on a secure backend server.
-            const API_KEYS = {
-                chat: "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",
-                image: "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",
-                file: "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",
-                code: "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"
-            };
-
-            // --- Chat Assistant ---
-            const chatInput = document.getElementById('chat-input');
-            const chatSendBtn = document.getElementById('chat-send');
-            const chatContainer = chatView.querySelector('div:first-child');
-            const chatNewBtn = document.getElementById('chat-new');
-            const chatLoadBtn = document.getElementById('chat-load');
-            let chatHistory = [];
-
-            const saveChatToLocalStorage = () => {
-                try {
-                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-                } catch (e) {
-                    console.error("Failed to save chat to local storage:", e);
-                }
-            };
-
-            const renderChatHistory = (history) => {
-                chatContainer.innerHTML = '';
-                history.forEach(msg => {
-                    // Adjust for OpenRouter message format
-                    if (msg.role === 'user' || msg.role === 'assistant') {
-                        const messageDiv = document.createElement('div');
-                        messageDiv.classList.add('chat-message', msg.role === 'user' ? 'user-message' : 'ai-message');
-                        messageDiv.textContent = msg.content; // Use 'content' for OpenRouter
-                        chatContainer.appendChild(messageDiv);
-                    }
-                });
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            };
-
-            const loadChatFromLocalStorage = () => {
-                try {
-                    const savedChat = localStorage.getItem('chatHistory');
-                    if (savedChat) {
-                        chatHistory = JSON.parse(savedChat);
-                        renderChatHistory(chatHistory);
-                        showMessage('Chat loaded successfully!');
-                    } else {
-                        showMessage('No saved chat found.');
-                        chatHistory = [];
-                        renderChatHistory(chatHistory);
-                    }
-                } catch (e) {
-                    showMessage('Failed to load chat. The saved data might be corrupted.');
-                    console.error("Failed to load chat from local storage:", e);
-                    chatHistory = [];
-                    renderChatHistory(chatHistory);
-                }
-            };
-
-            loadChatFromLocalStorage();
-
-            const sendMessage = async () => {
-                const prompt = chatInput.value.trim();
-                if (!prompt) return;
-
-                const userMessageDiv = document.createElement('div');
-                userMessageDiv.classList.add('chat-message', 'user-message');
-                userMessageDiv.textContent = prompt;
-                chatContainer.appendChild(userMessageDiv);
-                // Adjust for OpenRouter message format
-                chatHistory.push({ role: 'user', content: prompt });
-                chatInput.value = '';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                const responseDiv = document.createElement('div');
-                responseDiv.classList.add('chat-message', 'ai-message');
-                responseDiv.innerHTML = '<div class="loader"></div>';
-                chatContainer.appendChild(responseDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                try {
-                    // Use OpenRouter chat completions endpoint
-                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
-                    const payload = {
-                        model: "openai/gpt-4o-mini", // Specify the model
-                        messages: chatHistory // Use 'messages' array
-                    };
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEYS.chat}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Baba Baniyecche Somman Kor',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    // Check for API errors in the response body
-                    if (result.error) {
-                        console.error("Chat API returned an error:", result.error);
-                        responseDiv.textContent = `API Error: ${result.error.message || 'Unknown error'}`;
-                        return; // Stop processing if API reports an error
-                    }
-
-                    // Extract message content based on OpenRouter/OpenAI format
-                    const aiMessage = result?.choices?.[0]?.message?.content;
-
-                    if (aiMessage !== undefined && aiMessage !== null) {
-                        responseDiv.textContent = aiMessage;
-                        // Update history with assistant's message (OpenRouter format)
-                        chatHistory.push({ role: 'assistant', content: aiMessage });
-                    } else {
-                        // Handle case where message content is missing but no explicit API error
-                        console.warn("Unexpected API response structure for chat:", result);
-                        responseDiv.textContent = "Sorry, something went wrong. The response format was unexpected.";
-                    }
-                } catch (error) {
-                    // Log the actual error object to the console
-                    console.error("Chat API error (network or parsing):", error);
-                    responseDiv.textContent = "Sorry, something went wrong. Please check the console for details.";
-                } finally {
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    saveChatToLocalStorage(); // Save after every message
-                }
-            };
-
-            chatSendBtn.addEventListener('click', sendMessage);
-            chatInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-
-            chatNewBtn.addEventListener('click', () => {
-                localStorage.removeItem('chatHistory');
-                chatHistory = [];
-                chatContainer.innerHTML = '<div class="chat-message ai-message">Hello! I\'m your chat assistant. Ask me anything.</div>';
-                showMessage('New chat started!');
-            });
-
-            chatLoadBtn.addEventListener('click', () => {
-                loadChatFromLocalStorage();
-            });
-
-            // --- Image Generator ---
-            const imagePromptInput = document.getElementById('image-prompt');
-            const imageGenerateBtn = document.getElementById('image-generate');
-            const generatedImage = document.getElementById('generated-image');
-            const imageLoader = document.getElementById('image-loader');
-
-            imageGenerateBtn.addEventListener('click', async () => {
-                const prompt = imagePromptInput.value.trim();
-                if (!prompt) {
-                    showMessage("Please enter a prompt to generate an image.");
-                    return;
-                }
-
-                imageLoader.classList.remove('hidden');
-                generatedImage.src = '';
-                imageGenerateBtn.disabled = true;
-
-                try {
-                    // Using OpenAI DALL-E 3 via OpenRouter
-                    const payload = {
-                        model: "openai/dall-e-3",
-                        prompt: prompt,
-                        n: 1,
-                        size: "1024x1024"
-                    };
-                    const apiUrl = `https://openrouter.ai/api/v1/images/generations`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEYS.image}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Baba Baniyecche Somman Kor',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    // Check for API errors in the response body
-                    if (result.error) {
-                        console.error("Image API returned an error:", result.error);
-                        generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
-                        showMessage(`API Error: ${result.error.message || 'Unknown error'}`);
-                        return;
-                    }
-
-                    if (result.data && result.data.length > 0 && result.data[0].url) {
-                        const imageUrl = result.data[0].url;
-                        generatedImage.src = imageUrl;
-                        generatedImage.alt = prompt;
-                    } else {
-                        console.warn("Unexpected API response structure for image generation:", result);
-                        generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
-                        showMessage("Image generation failed. Unexpected response format.");
-                    }
-                } catch (error) {
-                    // Log the actual error object to the console
-                    console.error("Image API error (network or parsing):", error);
-                    generatedImage.src = "https://placehold.co/600x400/e5e7eb/6b7280?text=Image+generation+failed";
-                    showMessage("Image generation failed. Please check the console for details.");
-                } finally {
-                    imageLoader.classList.add('hidden');
-                    imageGenerateBtn.disabled = false;
-                }
-            });
-
-            // --- File Analyzer ---
-            const fileInput = document.getElementById('file-input');
-            const fileAnalyzeBtn = document.getElementById('file-analyze');
-            const fileResultContainer = fileView.querySelector('div:first-child');
-            const fileUploadInputDiv = document.getElementById('file-upload-input');
-            const fileChatInputDiv = document.getElementById('file-chat-input');
-            const fileChatPromptInput = document.getElementById('file-chat-prompt');
-            const fileChatSendBtn = document.getElementById('file-chat-send');
-
-            let fileChatHistory = [];
-
-            const sendFilePrompt = async (prompt) => {
-                if (!prompt) return;
-
-                const userMessageDiv = document.createElement('div');
-                userMessageDiv.classList.add('chat-message', 'user-message');
-                userMessageDiv.textContent = prompt;
-                fileResultContainer.appendChild(userMessageDiv);
-                fileChatHistory.push({ role: "user", content: prompt });
-                fileChatPromptInput.value = '';
-                fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
-
-                const responseDiv = document.createElement('div');
-                responseDiv.classList.add('chat-message', 'ai-message');
-                responseDiv.innerHTML = '<div class="loader"></div>';
-                fileResultContainer.appendChild(responseDiv);
-                fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
-
-                try {
-                    const payload = {
-                        model: "openai/gpt-4o-mini", // Specify the model
-                        messages: fileChatHistory
-                    };
-                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEYS.file}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Baba Baniyecche Somman Kor',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    // Check for API errors in the response body
-                    if (result.error) {
-                        console.error("File Analysis API returned an error:", result.error);
-                        responseDiv.textContent = `API Error: ${result.error.message || 'Unknown error'}`;
-                        return;
-                    }
-
-                    const analysisResult = result?.choices?.[0]?.message?.content;
-
-                    if (analysisResult !== undefined && analysisResult !== null) {
-                        responseDiv.textContent = analysisResult;
-                        fileChatHistory.push({ role: 'assistant', content: analysisResult });
-                    } else {
-                        console.warn("Unexpected API response structure for file analysis (follow-up):", result);
-                        responseDiv.textContent = "Sorry, something went wrong with the analysis. Unexpected response format.";
-                    }
-                } catch (error) {
-                    // Log the actual error object to the console
-                    console.error("File Analysis API error (network or parsing - follow-up):", error);
-                    responseDiv.textContent = "Sorry, something went wrong with the analysis. Please check the console for details.";
-                }
-                fileResultContainer.scrollTop = fileResultContainer.scrollHeight;
-            };
-
-            fileAnalyzeBtn.addEventListener('click', async () => {
-                const file = fileInput.files[0];
-                if (!file) {
-                    showMessage("Please select a file to analyze.");
-                    return;
-                }
-
-                fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base">Analyzing file...</div>`;
-                fileAnalyzeBtn.disabled = true;
-                fileChatHistory = [];
-
-                try {
-                    let promptText = "Analyze this file. Provide a summary of its content, file type, and potential use cases.";
-
-                    if (file.type.startsWith('image/')) {
-                        const base64Data = await new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result.split(',')[1]);
-                            reader.readAsDataURL(file);
-                        });
-                        fileChatHistory.push({
-                            role: "user",
-                            content: [
-                                { type: "text", text: promptText },
-                                { type: "image_url", image_url: { url: `data:${file.type};base64,${base64Data}` } }
-                            ]
-                        });
-                    } else {
-                        const fileContent = await new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result);
-                            reader.readAsText(file);
-                        });
-                        fileChatHistory.push({
-                            role: "user",
-                            content: `${promptText} File content:\n${fileContent}`
-                        });
-                    }
-
-                    const payload = {
-                         model: "openai/gpt-4o-mini", // Specify the model
-                         messages: fileChatHistory
-                    };
-                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEYS.file}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Baba Baniyecche Somman Kor',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    // Check for API errors in the response body
-                    if (result.error) {
-                        console.error("File Analysis API (initial) returned an error:", result.error);
-                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">API Error: ${result.error.message || 'Unknown error'}</div>`;
-                        return;
-                    }
-
-                    const analysisResult = result?.choices?.[0]?.message?.content;
-
-                    if (analysisResult !== undefined && analysisResult !== null) {
-                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base"><pre class="whitespace-pre-wrap">${analysisResult}</pre></div>`;
-                        fileChatHistory.push({ role: 'assistant', content: analysisResult });
-                        fileUploadInputDiv.classList.add('hidden');
-                        fileChatInputDiv.classList.remove('hidden');
-                    } else {
-                        console.warn("Unexpected API response structure for file analysis (initial):", result);
-                        fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis. Unexpected response format.</div>`;
-                    }
-                } catch (error) {
-                    // Log the actual error object to the console
-                    console.error("File Analysis API error (network or parsing - initial):", error);
-                    fileResultContainer.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with the analysis. Please check the console for details.</div>`;
-                } finally {
-                    fileAnalyzeBtn.disabled = false;
-                }
-            });
-
-            fileChatSendBtn.addEventListener('click', () => sendFilePrompt(fileChatPromptInput.value));
-            fileChatPromptInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    sendFilePrompt(fileChatPromptInput.value);
-                }
-            });
-
-
-            // --- Code Helper ---
-            const codePromptTextarea = document.getElementById('code-prompt');
-            const codeGenerateBtn = document.getElementById('code-generate');
-            const codeOutputDiv = document.getElementById('code-output');
-
-            codeGenerateBtn.addEventListener('click', async () => {
-                const prompt = codePromptTextarea.value.trim();
-                if (!prompt) {
-                    showMessage("Please enter a prompt for the code helper.");
-                    return;
-                }
-
-                codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base">Generating code...</div>`;
-                codeGenerateBtn.disabled = true;
-
-                try {
-                    const payload = {
-                        model: "openai/gpt-4o-mini", // Specify the model
-                        messages: [{
-                            role: "user",
-                            content: `Generate code based on the following request. Provide the code in a single code block. If you are fixing or debugging code, provide the corrected code in a code block and an explanation below the block. Request: ${prompt}`
-                        }]
-                    };
-                    const apiUrl = `https://openrouter.ai/api/v1/chat/completions`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${API_KEYS.code}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Baba Baniyecche Somman Kor',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                     // Check for API errors in the response body
-                    if (result.error) {
-                        console.error("Code Helper API returned an error:", result.error);
-                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">API Error: ${result.error.message || 'Unknown error'}</div>`;
-                        return;
-                    }
-
-                    const codeResult = result?.choices?.[0]?.message?.content;
-
-                    if (codeResult !== undefined && codeResult !== null) {
-                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-gray-700 text-sm sm:text-base"><pre class="whitespace-pre-wrap">${codeResult}</pre></div>`;
-                    } else {
-                        console.warn("Unexpected API response structure for code helper:", result);
-                        codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation. Unexpected response format.</div>`;
-                    }
-                } catch (error) {
-                    // Log the actual error object to the console
-                    console.error("Code Helper API error (network or parsing):", error);
-                    codeOutputDiv.innerHTML = `<div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm text-red-500 text-sm sm:text-base">Sorry, something went wrong with code generation. Please check the console for details.</div>`;
-                } finally {
-                    codeGenerateBtn.disabled = false;
-                }
-            });
-        });
-    </script>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const API = "https://openrouter.ai/api/v1/chat/completions";
+  const IMAGE_API = "https://openrouter.ai/api/v1/images/generations";
+  const KEY = "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";
+
+  const views=document.querySelectorAll('.view');
+  const navBtns=document.querySelectorAll('.nav-btn');
+  const showView=(id)=>{
+    views.forEach(v=>v.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    navBtns.forEach(b=>{
+      b.classList.toggle('active',`${b.dataset.view}-view`===id);
+      b.classList.toggle('inactive',`${b.dataset.view}-view`!==id);
+    });
+  };
+  navBtns.forEach(b=>b.onclick=()=>showView(`${b.dataset.view}-view`));
+
+  const renderMarkdown=(txt)=>marked.parse(txt);
+
+  // CHAT
+  const chatC=document.getElementById('chat-container');
+  const chatInput=document.getElementById('chat-input');
+  const chatSend=document.getElementById('chat-send');
+  const chatNew=document.getElementById('chat-new');
+  const chatLoad=document.getElementById('chat-load');
+  let chatHistory=[];
+
+  async function chatSendMessage(){
+    const msg=chatInput.value.trim();
+    if(!msg)return;
+    chatC.innerHTML+=`<div class='chat-message user-message'>${msg}</div>`;
+    chatInput.value='';
+    const loader=document.createElement('div');
+    loader.className='chat-message ai-message';
+    loader.innerHTML='<div class="loader"></div>';
+    chatC.appendChild(loader);
+    chatC.scrollTop=chatC.scrollHeight;
+    const res=await fetch(API,{method:'POST',headers:{'Authorization':`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'openai/gpt-4o-mini',messages:[...chatHistory,{role:'user',content:msg}]})});
+    const data=await res.json();
+    const reply=data?.choices?.[0]?.message?.content||'Error.';
+    loader.innerHTML=renderMarkdown(reply);
+    chatHistory.push({role:'user',content:msg},{role:'assistant',content:reply});
+    localStorage.setItem('chatHistory',JSON.stringify(chatHistory));
+  }
+  chatSend.onclick=chatSendMessage;
+  chatInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();chatSendMessage();}};
+  chatNew.onclick=()=>{chatHistory=[];localStorage.removeItem('chatHistory');chatC.innerHTML='<div class="chat-message ai-message">🆕 New chat started.</div>';};
+  chatLoad.onclick=()=>{const s=localStorage.getItem('chatHistory');if(s){chatHistory=JSON.parse(s);chatC.innerHTML=chatHistory.map(m=>`<div class='chat-message ${m.role==='user'?'user-message':'ai-message'}'>${renderMarkdown(m.content)}</div>`).join('');}else{chatC.innerHTML='<div class="chat-message ai-message">No saved chat.</div>';}};  
+
+  // IMAGE
+  const imgPrompt=document.getElementById('image-prompt');
+  const imgGen=document.getElementById('image-generate');
+  const imgOut=document.getElementById('generated-image');
+  const imgLoad=document.getElementById('image-loader');
+  imgGen.onclick=async()=>{
+    const t=imgPrompt.value.trim();
+    if(!t)return alert('Enter prompt');
+    imgLoad.classList.remove('hidden');
+    const res=await fetch(IMAGE_API,{method:'POST',headers:{'Authorization':`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'openai/dall-e-3',prompt:t,n:1,size:'1024x1024'})});
+    const d=await res.json();
+    imgOut.src=d?.data?.[0]?.url||'https://placehold.co/600x400?text=Failed';
+    imgLoad.classList.add('hidden');
+  };
+
+  // FILE
+  const fInput=document.getElementById('file-input');
+  const fBtn=document.getElementById('file-analyze');
+  const fRes=document.getElementById('file-result');
+  const fChat=document.getElementById('file-chat');
+  const fChatPrompt=document.getElementById('file-chat-prompt');
+  const fChatSend=document.getElementById('file-chat-send');
+  let fHist=[];
+  fBtn.onclick=()=>{
+    const f=fInput.files[0];if(!f)return alert('Select file');
+    const r=new FileReader();
+    r.onload=async()=>{
+      const content=r.result.slice(0,4000);
+      fRes.innerHTML='<div class="ai-message p-3">Analyzing file...</div>';
+      const res=await fetch(API,{method:'POST',headers:{'Authorization':`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'openai/gpt-4o-mini',messages:[{role:'user',content:`Analyze this file:\n${content}`}]})});
+      const d=await res.json();
+      const rep=d?.choices?.[0]?.message?.content||'Error.';
+      fRes.innerHTML=`<div class="ai-message p-3">${renderMarkdown(rep)}</div>`;
+      fChat.classList.remove('hidden');fHist=[{role:'assistant',content:rep}];
+    };r.readAsText(f);
+  };
+  fChatSend.onclick=async()=>{
+    const q=fChatPrompt.value.trim();if(!q)return;
+    fRes.innerHTML+=`<div class="chat-message user-message">${q}</div>`;
+    const res=await fetch(API,{method:'POST',headers:{'Authorization':`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'openai/gpt-4o-mini',messages:[...fHist,{role:'user',content:q}]})});
+    const d=await res.json();
+    const rep=d?.choices?.[0]?.message?.content||'Error.';
+    fRes.innerHTML+=`<div class="chat-message ai-message">${renderMarkdown(rep)}</div>`;
+    fHist.push({role:'user',content:q},{role:'assistant',content:rep});
+    fChatPrompt.value='';
+  };
+
+  // CODE
+  const cPrompt=document.getElementById('code-prompt');
+  const cBtn=document.getElementById('code-generate');
+  const cOut=document.getElementById('code-output');
+  cBtn.onclick=async()=>{
+    const text=cPrompt.value.trim();if(!text)return alert('Enter code prompt');
+    cOut.innerHTML='<div class="p-3">Generating code...</div>';
+    const res=await fetch(API,{method:'POST',headers:{'Authorization':`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:'openai/gpt-4o-mini',messages:[{role:'user',content:text}]})});
+    const d=await res.json();
+    const rep=d?.choices?.[0]?.message?.content||'Error.';
+    cOut.innerHTML=renderMarkdown(rep);
+  };
+});
+</script>
 </body>
 </html>
